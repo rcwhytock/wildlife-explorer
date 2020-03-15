@@ -1,9 +1,10 @@
 import React from 'react';
-import { Button, Card } from '@blueprintjs/core';
+import { Button } from '@blueprintjs/core';
 import { spawn } from 'node-pty';
 import PythonLogViewer from './PythonLogViewer';
 
 type changeLogMessageType = (newChangeLogMessage: string) => {};
+type changeDirectoryChoiceType = (newDirectory: string) => {};
 
 const computePredictions = (
   directory: string,
@@ -28,9 +29,7 @@ const computePredictions = (
   });
 };
 
-const chooseDirectoryAndStartPredictions = (
-  changeLogMessage: changeLogMessageType
-) => {
+const chooseDirectory = (changeDirectoryChoice: changeDirectoryChoiceType) => {
   // eslint-disable-next-line global-require
   const { dialog } = require('electron').remote;
   dialog
@@ -40,46 +39,33 @@ const chooseDirectoryAndStartPredictions = (
     .then(result => {
       if (!result.canceled) {
         const directory = result.filePaths[0];
-        computePredictions(directory, changeLogMessage);
+        changeDirectoryChoice(directory);
       }
       return null;
     })
     .catch(error => {
-      // eslint-disable-next-line no-console
-      alert(error);
-    });
-};
-
-const chooseDirectory = (changeLogMessage: changeLogMessageType) => {
-  // eslint-disable-next-line global-require
-  const { dialog } = require('electron').remote;
-  dialog
-    .showOpenDialog({
-      properties: ['openDirectory']
-    })
-    .then(result => {
-      if (!result.canceled) {
-        const directory = result.filePaths[0];
-        // update state here
-      }
-      return null;
-    })
-    .catch(error => {
-      // eslint-disable-next-line no-console
+      // eslint-disable-next-line no-alert
       alert(error);
     });
 };
 
 type Props = {
   changeLogMessage: changeLogMessageType;
+  changeDirectoryChoice: changeDirectoryChoiceType;
   logMessage: string;
+  directoryChoice: string;
 };
 
 export default function Classifier(props: Props) {
-  const { logMessage } = props;
+  const {
+    directoryChoice,
+    logMessage,
+    changeDirectoryChoice,
+    changeLogMessage
+  } = props;
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: '20px', width: '60vw' }}>
       <h1>Welcome to Mbaza AI!</h1>
       <h4>The first offline AI wildlife explorer</h4>
 
@@ -88,11 +74,17 @@ export default function Classifier(props: Props) {
           type="text"
           className="bp3-input"
           placeholder="Choose directory"
+          value={directoryChoice}
+          onChange={e => {
+            changeDirectoryChoice(e.target.value);
+          }}
         />
         <button
+          aria-label="Search"
+          type="submit"
           className="bp3-button bp3-minimal bp3-intent-primary bp3-icon-search"
           onClick={() => {
-            chooseDirectory(props.changeLogMessage);
+            chooseDirectory(changeDirectoryChoice);
           }}
         />
       </div>
@@ -101,7 +93,7 @@ export default function Classifier(props: Props) {
         text="Start predictions!"
         icon="predictive-analysis"
         onClick={() => {
-          chooseDirectoryAndStartPredictions(props.changeLogMessage);
+          computePredictions(props.directoryChoice, changeLogMessage);
         }}
         style={{ marginBottom: '10px', backgroundColor: '#fff' }}
       />
