@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@blueprintjs/core';
+import { Button, Card } from '@blueprintjs/core';
 import { spawn } from 'node-pty';
 import PythonLogViewer from './PythonLogViewer';
 
@@ -50,6 +50,26 @@ const chooseDirectoryAndStartPredictions = (
     });
 };
 
+const chooseDirectory = (changeLogMessage: changeLogMessageType) => {
+  // eslint-disable-next-line global-require
+  const { dialog } = require('electron').remote;
+  dialog
+    .showOpenDialog({
+      properties: ['openDirectory']
+    })
+    .then(result => {
+      if (!result.canceled) {
+        const directory = result.filePaths[0];
+        // update state here
+      }
+      return null;
+    })
+    .catch(error => {
+      // eslint-disable-next-line no-console
+      alert(error);
+    });
+};
+
 type Props = {
   changeLogMessage: changeLogMessageType;
   logMessage: string;
@@ -63,8 +83,22 @@ export default function Classifier(props: Props) {
       <h1>Welcome to Mbaza AI!</h1>
       <h4>The first offline AI wildlife explorer</h4>
 
+      <div className="bp3-input-group" style={{ marginBottom: '10px' }}>
+        <input
+          type="text"
+          className="bp3-input"
+          placeholder="Choose directory"
+        />
+        <button
+          className="bp3-button bp3-minimal bp3-intent-primary bp3-icon-search"
+          onClick={() => {
+            chooseDirectory(props.changeLogMessage);
+          }}
+        />
+      </div>
+
       <Button
-        text="Choose directory and start predictions!"
+        text="Start predictions!"
         icon="predictive-analysis"
         onClick={() => {
           chooseDirectoryAndStartPredictions(props.changeLogMessage);
