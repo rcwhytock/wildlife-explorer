@@ -30,12 +30,13 @@ def get_images(data_folder):
     print(f"Found {len(images)} images.")
     return images
 
-def load_model(model, images, pytorch_num_workers):
+def load_model(model, images, pytorch_num_workers, batch_size):
     model_path = Path(model)
     print(f"Loading model: {model}.")
     assert model_path.exists(), f"It seems {model} is not a file"
     assert model_path.suffix == ".pkl", "The model should end with .pkl"
     learn = load_learner(model_path.parent, model_path.name, test=images, num_workers=pytorch_num_workers)
+    learn.data.batch_size = batch_size
     # learn.callback_fns=[]
     print(f"Model loaded.")
     return learn
@@ -59,8 +60,8 @@ def run_inference(learn):
     print(f"Inference complete. It took {inference_stop - inference_start}.")
     return preds
 
-def get_predictions(model, images, pytorch_num_workers):
-    learn = load_model(model, images, pytorch_num_workers)
+def get_predictions(model, images, pytorch_num_workers, batch_size):
+    learn = load_model(model, images, pytorch_num_workers, batch_size)
     get_gpu_status(learn)
     preds = run_inference(learn)
     classes = learn.data.classes
@@ -126,11 +127,11 @@ def order_df(df,var):
     df = df[var+varlist]
     return df
 
-def infer_to_csv(model, data_folder, output, keep_scores, overwrite, pytorch_num_workers):
+def infer_to_csv(model, data_folder, output, keep_scores, overwrite, pytorch_num_workers, batch_size):
     if not overwrite:
         assert not Path(output).exists(), f"{output} already exists, use the 'overwrite' option to proceed anyway."
     images = get_images(data_folder)
-    preds, classes = get_predictions(model, images, pytorch_num_workers)
+    preds, classes = get_predictions(model, images, pytorch_num_workers, batch_size)
     df_preds = get_top_preds_and_scores(preds, classes)
     df_preds["path"] = images
     df_preds = parse_path(df_preds) # extract station, check, cam where possible from path
